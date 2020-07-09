@@ -114,9 +114,11 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 					RemoveLastBar(bars);
 					// Agrega la nueva barra con los nuevos valores
 					// Original
-					AddBar(bars, renkoHigh - offset, Math.Max(renkoHigh - offset, renkoHigh), Math.Min(renkoHigh - offset, renkoHigh), renkoHigh, barTime, barVolume);
+					//AddBar(bars, renkoHigh - offset, Math.Max(renkoHigh - offset, renkoHigh), Math.Min(renkoHigh - offset, renkoHigh), renkoHigh, barTime, barVolume);
 					// Bajista
-					//AddBar(bars, renkoHigh + offset, Math.Max(renkoHigh + offset, renkoHigh), Math.Min(renkoHigh + offset, renkoHigh), renkoHigh, barTime, barVolume);
+					var _renkoHigh	= renkoLow + 1.0 * offset;	// RenkoLow - el doble del tamaño de la caja
+					var _renkoLow	= renkoLow - offset;		// RenkoLow - el tamaño de la caja
+					AddBar(bars, _renkoHigh + offset, Math.Max(_renkoHigh + offset, _renkoHigh), Math.Min(_renkoHigh + offset, _renkoHigh), _renkoHigh, barTime, barVolume);
 					isRail2Rail = true;
           		}
 				// (1) Obtiene el valor mayor entre renkoHigh y, renkoHigh - tamaño de la caja
@@ -169,11 +171,13 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 				if (trend != 0 && trend != -1){
 					// Elimina la barra la barra de Update
 					RemoveLastBar(bars);
+					var _renkoLow	= renkoHigh - 1.0 * offset; // RenkoHigh - el doble del tamaño de la caja
+					var _renkoHigh	= renkoHigh + offset;		// Renkohigh + el tamaño de la caja
 					// Agrega la nueva barra con los nuevos valores
 					// Original
-					AddBar(bars, renkoLow + offset, Math.Max(renkoLow + offset, renkoLow), Math.Min(renkoLow + offset, renkoLow), renkoLow, barTime, barVolume);
+					//AddBar(bars, renkoLow + offset, Math.Max(renkoLow + offset, renkoLow), Math.Min(renkoLow + offset, renkoLow), renkoLow, barTime, barVolume);
 					// Alcista
-					//AddBar(bars, renkoLow - offset, Math.Max(renkoLow - offset, renkoLow), Math.Min(renkoLow - offset, renkoLow), renkoLow, barTime, barVolume);
+					AddBar(bars, _renkoLow - offset, Math.Max(_renkoLow - offset, _renkoLow), Math.Min(_renkoLow - offset, _renkoLow), _renkoLow, barTime, barVolume);
 					isRail2Rail = true;
 				}
 				// (1) Obtiene el valor mayor entre renkoLow y, renkoLow + tamaño de la caja
