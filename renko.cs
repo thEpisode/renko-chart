@@ -16,6 +16,7 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 {
 	public class MiRenkDavis : BarsType
 	{
+		private int trend;
 		private			double			offset;
 		private			double			renkoHigh;
 		private			double			renkoLow;
@@ -103,33 +104,38 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 			}
 
 			// el precio de cierre es mayor renkohigh?
-      // Valores alcistas
+      		// [COMPORTAMIENTO ALCISTA]
 			if (close.ApproxCompare(renkoHigh) >= 0)
 			{
 				// TODO: Mejorar la forma como se pinta barrita
-          if (barOpen.ApproxCompare(renkoHigh - offset) == 0){
-            // Elimina la barra
-						RemoveLastBar(bars);
-						// Agrega la nueva barra con los nuevos valores
-						AddBar(bars, renkoHigh - offset, Math.Max(renkoHigh - offset, renkoHigh), Math.Min(renkoHigh - offset, renkoHigh), renkoHigh, barTime, barVolume);
-          }
+				bool isRail2Rail = false;
+				if (trend != 0 && trend != 1) {
+					// Elimina la barra de Update
+					RemoveLastBar(bars);
+					// Agrega la nueva barra con los nuevos valores
+					// Original
+					AddBar(bars, renkoHigh - offset, Math.Max(renkoHigh - offset, renkoHigh), Math.Min(renkoHigh - offset, renkoHigh), renkoHigh, barTime, barVolume);
+					// Bajista
+					//AddBar(bars, renkoHigh + offset, Math.Max(renkoHigh + offset, renkoHigh), Math.Min(renkoHigh + offset, renkoHigh), renkoHigh, barTime, barVolume);
+					isRail2Rail = true;
+          		}
+				// (1) Obtiene el valor mayor entre renkoHigh y, renkoHigh - tamaño de la caja
+				// (2) Si el valor de x es igual a y entonces retorna 0
+				//		Si el valor de x es mayor a y entonces retorna 1
+				//		Si el valor de x es menor a y entonces retorna -1
 				if (barOpen.ApproxCompare(renkoHigh - offset) != 0 // valor de apertura de la (última barra - el tamño de la caja) es mayor o menor a barOpen?
-					// (1) Obtiene el valor mayor entre renkoHigh y, renkoHigh - tamaño de la caja
-					// (2) Si el valor de x es igual a y entonces retorna 0
-					//		Si el valor de x es mayor a y entonces retorna 1
-					//		Si el valor de x es menor a y entonces retorna -1
 					|| barHigh.ApproxCompare(Math.Max(renkoHigh - offset, renkoHigh)) != 0 // Es barHigh mayor o menor a (1)?
-					// ======================================================================================================
-					// (1) Obtiene el valor mayor entre renkoHigh y, renkoHigh - tamaño de la caja
-					// (2) Si el valor de barLow es igual a (1) entonces retorna 0
-					//		Si el valor de barLow es mayor a (1) entonces retorna 1
-					//		Si el valor de barLow es menor a (1) entonces retorna -1
 					|| barLow.ApproxCompare(Math.Min(renkoHigh - offset, renkoHigh)) != 0)// Es barLow mayor o menor a (1)?
 				{
-          // TODO: Validar si la condición cambia, si si, entonces no elimine la última barra
-					// Elimina la última barra
-					//RemoveLastBar(bars);
+          			// TODO: Validar si la condición cambia, si si, entonces no elimine la última barra
+					if(!isRail2Rail)
+					{
+						// Elimina la última barra de Update
+						RemoveLastBar(bars);
+					}
+					
 					// Agrega una barra nueva con los nuevos valores
+					// Alcista
 					AddBar(bars, renkoHigh - offset, Math.Max(renkoHigh - offset, renkoHigh), Math.Min(renkoHigh - offset, renkoHigh), renkoHigh, barTime, barVolume);
 				}
 
@@ -151,66 +157,69 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 
 				// Agrega la barra final parcial
 				AddBar(bars, renkoHigh - offset, Math.Max(renkoHigh - offset, close), Math.Min(renkoHigh - offset, close), close, time, volume);
+				trend = 1;
 			}
 			// el precio de cierre es menor o igual a renkohigh?
-      // Valores bajistas
-			else
+      		// El precio de cierre es menor o igual al renkolow
+			// [COMPORTAMIENTO BAJISTA]
+			else if (close.ApproxCompare(renkoLow) <= 0)
 			{
-				// El precio de cierre es menor o igual al renkolow
-				if (close.ApproxCompare(renkoLow) <= 0)
+				bool isRail2Rail = false;
+				// TODO: Mejorar la forma como se pinta barrita
+				if (trend != 0 && trend != -1){
+					// Elimina la barra la barra de Update
+					RemoveLastBar(bars);
+					// Agrega la nueva barra con los nuevos valores
+					// Original
+					AddBar(bars, renkoLow + offset, Math.Max(renkoLow + offset, renkoLow), Math.Min(renkoLow + offset, renkoLow), renkoLow, barTime, barVolume);
+					// Alcista
+					//AddBar(bars, renkoLow - offset, Math.Max(renkoLow - offset, renkoLow), Math.Min(renkoLow - offset, renkoLow), renkoLow, barTime, barVolume);
+					isRail2Rail = true;
+				}
+				// (1) Obtiene el valor mayor entre renkoLow y, renkoLow + tamaño de la caja
+				// (2) Si el valor de x es igual a y entonces retorna 0
+				//		Si el valor de x es mayor a y entonces retorna 1
+				//		Si el valor de x es menor a y entonces retorna -1
+				if (barOpen.ApproxCompare(renkoLow + offset) != 0 // Valor de apertura de (renkolow + el tamaño de la caja) es mayor o menor a barOpen?
+					|| barHigh.ApproxCompare(Math.Max(renkoLow + offset, renkoLow)) != 0 // Es barHigh mayor o menor a (1)?
+					|| barLow.ApproxCompare(Math.Min(renkoLow + offset, renkoLow)) != 0)  // Es barlow mayor o menor a (1)?
 				{
-          // TODO: Mejorar la forma como se pinta barrita
-          if (barOpen.ApproxCompare(renkoLow + offset) == 0){
-            // Elimina la barra
+					// TODO: Validar si la condición cambia, si si, entonces no elimine la última barra
+					if(!isRail2Rail){
+						// Elimine la barra de Update
 						RemoveLastBar(bars);
-						// Agrega la nueva barra con los nuevos valores
-						AddBar(bars, renkoLow + offset, Math.Max(renkoLow + offset, renkoLow), Math.Min(renkoLow + offset, renkoLow), renkoLow, barTime, barVolume);
-          }
-					if (barOpen.ApproxCompare(renkoLow + offset) != 0 // Valor de apertura de (renkolow + el tamaño de la caja) es mayor o menor a barOpen?
-						// (1) Obtiene el valor mayor entre renkoLow y, renkoLow + tamaño de la caja
-						// (2) Si el valor de barHigh es igual a (1) entonces retorna 0
-						//		Si el valor de barHigh es mayor a (1) entonces retorna 1
-						//		Si el valor de barHigh es menor a (1) entonces retorna -1
-						|| barHigh.ApproxCompare(Math.Max(renkoLow + offset, renkoLow)) != 0 // Es barHigh mayor o menor a (1)?
-						// ======================================================================================================
-						// (1) Obtiene el valor minimo entre renkoLow y, renkoLow - tamaño de la caja
-						// (2) Si el valor de barLow es igual a (1) entonces retorna 0
-						//		Si el valor de barLow es mayor a (1) entonces retorna 1
-						//		Si el valor de barLow es menor a (1) entonces retorna -1
-						|| barLow.ApproxCompare(Math.Min(renkoLow + offset, renkoLow)) != 0)  // Es barlow mayor o menor a (1)?
-					{
-            // TODO: Validar si la condición cambia, si si, entonces no elimine la última barra
-						// Elimina la barra
-						//RemoveLastBar(bars);
-						// Agrega la nueva barra con los nuevos valores
-						AddBar(bars, renkoLow + offset, Math.Max(renkoLow + offset, renkoLow), Math.Min(renkoLow + offset, renkoLow), renkoLow, barTime, barVolume);
 					}
-
-					renkoHigh	= renkoLow + 2.0 * offset;	// RenkoLow - el doble del tamaño de la caja
-					renkoLow	= renkoLow - offset;		// RenkoLow - el tamaño de la caja
-
-					// ¿Hay un nuevo valor negociado?
-					isNewSession = SessionIterator.IsNewSession(time, isBar);
-					if (isNewSession)
-						SessionIterator.GetNextSession(time, isBar);  // Obtiene el último valor negociado
-
-					// Agrega barras vacías para llenar el gap si el precio salta
-					while (close.ApproxCompare(renkoLow) <= 0)
-					{
-						AddBar(bars, renkoLow + offset, Math.Max(renkoLow + offset, renkoLow), Math.Min(renkoLow + offset, renkoLow), renkoLow, time, 0);
-						renkoHigh	= renkoLow + 2.0 * offset;
-						renkoLow	= renkoLow - offset;
-					}
-
-					// Agrega la barra final parcial
-					AddBar(bars, renkoLow + offset, Math.Max(renkoLow + offset, close), Math.Min(renkoLow + offset, close), close, time, volume);
+					
+					// Agrega la nueva barra con los nuevos valores
+					// AddBar(Bars bars, double open, double high, double low, double close, DateTime time, long volume)
+					AddBar(bars, renkoLow + offset, Math.Max(renkoLow + offset, renkoLow), Math.Min(renkoLow + offset, renkoLow), renkoLow, barTime, barVolume);
 				}
-				// El precio de cierre mayor al renkolow
-				else 
+
+				renkoHigh	= renkoLow + 2.0 * offset;	// RenkoLow - el doble del tamaño de la caja
+				renkoLow	= renkoLow - offset;		// RenkoLow - el tamaño de la caja
+
+				// ¿Hay un nuevo valor negociado?
+				isNewSession = SessionIterator.IsNewSession(time, isBar);
+				if (isNewSession)
+					SessionIterator.GetNextSession(time, isBar);  // Obtiene el último valor negociado
+
+				// Agrega barras vacías para llenar el gap si el precio salta
+				while (close.ApproxCompare(renkoLow) <= 0)
 				{
-					// Actualiza la barra
-					UpdateBar(bars, close, close, close, time, volume);
+					AddBar(bars, renkoLow + offset, Math.Max(renkoLow + offset, renkoLow), Math.Min(renkoLow + offset, renkoLow), renkoLow, time, 0);
+					renkoHigh	= renkoLow + 2.0 * offset;
+					renkoLow	= renkoLow - offset;
 				}
+
+				// Agrega la barra final parcial
+				AddBar(bars, renkoLow + offset, Math.Max(renkoLow + offset, close), Math.Min(renkoLow + offset, close), close, time, volume);
+				trend = -1;
+			}
+			// El precio de cierre mayor al renkolow
+			else 
+			{
+				// Actualiza la barra
+				UpdateBar(bars, close, close, close, time, volume);
 			}
 
 			// El último precio el valor de cierre
