@@ -16,6 +16,9 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 {
 	public class MiRenkDavis : BarsType
 	{
+		// Tendencia alcista = 1
+		// Tendencia indefinida = 0 (análisis de primer barra)
+		// Tendencia bajista = -1
 		private int trend;
 		private			double			offset;
 		private			double			renkoHigh;
@@ -38,6 +41,8 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 
 		protected override void OnDataPoint(Bars bars, double open, double high, double low, double close, DateTime time, long volume, bool isBar, double bid, double ask)
 		{
+			double lastBarClose	= bars.GetClose(bars.Count - 1); // Trae el último precio de cierre
+
 			if (SessionIterator == null)
 				SessionIterator = new SessionIterator(bars);
 
@@ -53,7 +58,6 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 				if (bars.Count > 0)
 				{
 					// Close out last bar in session and set open == close
-					double		lastBarClose	= bars.GetClose(bars.Count - 1); // Trae el último precio de cierre
 					DateTime	lastBarTime		= bars.GetTime(bars.Count - 1); // Trae la última fecha del precio de cierre
 					long		lastBarVolume	= bars.GetVolume(bars.Count - 1); // Trae el último volumen de precio de cierre
 					RemoveLastBar(bars); // Elimina la última barra
@@ -107,19 +111,18 @@ namespace NinjaTrader.NinjaScript.BarsTypes
       		// [COMPORTAMIENTO ALCISTA]
 			if (close.ApproxCompare(renkoHigh) >= 0)
 			{
-				// TODO: Mejorar la forma como se pinta barrita
 				bool isRail2Rail = false;
+				// Hay cambio de tendencia hacia bajista?
 				if (trend != 0 && trend != 1) {
 					// Elimina la barra de Update
 					RemoveLastBar(bars);
+
 					// Agrega la nueva barra con los nuevos valores
-					// Original
-					//AddBar(bars, renkoHigh - offset, Math.Max(renkoHigh - offset, renkoHigh), Math.Min(renkoHigh - offset, renkoHigh), renkoHigh, barTime, barVolume);
-					// Alcista
 					var _renkoLow	= renkoHigh - 1.0 * offset; // RenkoHigh - el doble del tamaño de la caja
 					var _renkoHigh	= renkoHigh + offset;		// Renkohigh + el tamaño de la caja
+					// Agrega barra alcista
 					AddBar(bars, _renkoLow - offset, Math.Max(_renkoLow - offset, _renkoLow), Math.Min(_renkoLow - offset, _renkoLow), _renkoLow, barTime, barVolume);
-					// AddBar(Bars bars, double open, double high, double low, double close, DateTime time, long volume)
+					
 					isRail2Rail = true;
           		}
 				// (1) Obtiene el valor mayor entre renkoHigh y, renkoHigh - tamaño de la caja
@@ -130,7 +133,7 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 					|| barHigh.ApproxCompare(Math.Max(renkoHigh - offset, renkoHigh)) != 0 // Es barHigh mayor o menor a (1)?
 					|| barLow.ApproxCompare(Math.Min(renkoHigh - offset, renkoHigh)) != 0)// Es barLow mayor o menor a (1)?
 				{
-          			// TODO: Validar si la condición cambia, si si, entonces no elimine la última barra
+          			// No hubo cambio de tendencia
 					if(!isRail2Rail)
 					{
 						// Elimina la última barra de Update
@@ -168,8 +171,8 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 			else if (close.ApproxCompare(renkoLow) <= 0)
 			{
 				bool isRail2Rail = false;
-				// TODO: Mejorar la forma como se pinta barrita
-				if (trend != 0 && trend != -1){
+				// Hay cambio de tendencia hacia alcista?
+				if (trend != 0 && trend != -1) {
 					// Elimina la barra la barra de Update
 					RemoveLastBar(bars);
 					// Agrega la nueva barra con los nuevos valores
