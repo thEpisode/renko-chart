@@ -107,13 +107,50 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 				}
 			}
 
+			bool isRail2Rail = false;
+			// Hay cambio de tendencia hacia bajista?
+			if(close <= (renkoHigh)){
+				// Elimina la barra de Update
+				RemoveLastBar(bars);
+
+				// Agrega la nueva barra con los nuevos valores
+				renkoLow	= renkoHigh - 2.0 * offset; // RenkoHigh - el doble del tamaño de la caja
+				renkoHigh	= renkoHigh + offset;		// Renkohigh + el tamaño de la caja
+				// Agrega barra alcista
+				//AddBar(bars, _renkoLow - offset, Math.Max(_renkoLow - offset, _renkoLow), Math.Min(_renkoLow - offset, _renkoLow), _renkoLow, barTime, barVolume);
+				//AddBar(bars, _renkoHigh + offset, Math.Max(_renkoHigh + offset, _renkoHigh), Math.Min(_renkoHigh + offset, _renkoHigh), _renkoHigh, barTime, barVolume);
+				//AddBar(Bars bars, double open, double high, double low, double close, DateTime time, long volume)
+				
+				//Barra de una gráfica bajista
+				AddBar(bars, renkoLow + offset, Math.Max(renkoLow + offset, renkoLow), Math.Min(renkoLow + offset, renkoLow), renkoLow, barTime, barVolume);
+								
+				isRail2Rail = true;
+			}
+			//bool isRail2Rail = false;
+			// Hay cambio de tendencia hacia alcista?
+			if(close >= (renkoLow)) {
+				// Elimina la barra la barra de Update
+				RemoveLastBar(bars);
+				// Agrega la nueva barra con los nuevos valores
+				// Original
+				//AddBar(bars, renkoLow + offset, Math.Max(renkoLow + offset, renkoLow), Math.Min(renkoLow + offset, renkoLow), renkoLow, barTime, barVolume);
+				// Bajista
+				renkoHigh	= renkoLow + 2.0 * offset;	// RenkoLow - el doble del tamaño de la caja
+				renkoLow	= renkoLow - offset;		// RenkoLow - el tamaño de la caja
+				//AddBar(bars, _renkoHigh + offset, Math.Max(_renkoHigh + offset, _renkoHigh), Math.Min(_renkoHigh + offset, _renkoHigh), _renkoHigh, barTime, barVolume);
+				//AddBar(bars, _renkoLow - offset, Math.Max(_renkoLow - offset, _renkoLow), Math.Min(_renkoLow - offset, _renkoLow), _renkoLow, barTime, barVolume);
+				
+				//Barra de gráfica alcista
+				AddBar(bars, renkoHigh - offset, Math.Max(renkoHigh - offset, renkoHigh), Math.Min(renkoHigh - offset, renkoHigh), renkoHigh, barTime, barVolume);
+				
+				isRail2Rail = true;
+			}
 			// el precio de cierre es mayor renkohigh?
-      		// [COMPORTAMIENTO ALCISTA]
+      		// [DETECTA COMPORTAMIENTO ALCISTA]
 			if (close.ApproxCompare(renkoHigh) >= 0)
 			{
-				bool isRail2Rail = false;
-				// Hay cambio de tendencia hacia bajista?
-				if (trend != 0 && trend != 1) {
+				
+				/* if (trend != 0 && trend != 1) {
 					// Elimina la barra de Update
 					RemoveLastBar(bars);
 
@@ -124,7 +161,7 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 					AddBar(bars, _renkoLow - offset, Math.Max(_renkoLow - offset, _renkoLow), Math.Min(_renkoLow - offset, _renkoLow), _renkoLow, barTime, barVolume);
 					
 					isRail2Rail = true;
-          		}
+          		} */
 				// (1) Obtiene el valor mayor entre renkoHigh y, renkoHigh - tamaño de la caja
 				// (2) Si el valor de x es igual a y entonces retorna 0
 				//		Si el valor de x es mayor a y entonces retorna 1
@@ -167,12 +204,11 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 			}
 			// el precio de cierre es menor o igual a renkohigh?
       		// El precio de cierre es menor o igual al renkolow
-			// [COMPORTAMIENTO BAJISTA]
+			// [DETECTA COMPORTAMIENTO BAJISTA]
 			else if (close.ApproxCompare(renkoLow) <= 0)
 			{
-				bool isRail2Rail = false;
-				// Hay cambio de tendencia hacia alcista?
-				if (trend != 0 && trend != -1) {
+				
+				/* if (trend != 0 && trend != -1) {
 					// Elimina la barra la barra de Update
 					RemoveLastBar(bars);
 					// Agrega la nueva barra con los nuevos valores
@@ -183,7 +219,7 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 					var _renkoLow	= renkoLow - offset;		// RenkoLow - el tamaño de la caja
 					AddBar(bars, _renkoHigh + offset, Math.Max(_renkoHigh + offset, _renkoHigh), Math.Min(_renkoHigh + offset, _renkoHigh), _renkoHigh, barTime, barVolume);
 					isRail2Rail = true;
-				}
+				} */
 				// (1) Obtiene el valor mayor entre renkoLow y, renkoLow + tamaño de la caja
 				// (2) Si el valor de x es igual a y entonces retorna 0
 				//		Si el valor de x es mayor a y entonces retorna 1
@@ -200,6 +236,7 @@ namespace NinjaTrader.NinjaScript.BarsTypes
 					
 					// Agrega la nueva barra con los nuevos valores
 					// AddBar(Bars bars, double open, double high, double low, double close, DateTime time, long volume)
+					//Bajista
 					AddBar(bars, renkoLow + offset, Math.Max(renkoLow + offset, renkoLow), Math.Min(renkoLow + offset, renkoLow), renkoLow, barTime, barVolume);
 				}
 
